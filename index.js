@@ -5,256 +5,310 @@ const express = require('express'),
 
 app.use(bodyParser.json());
 
-let auth = require('./auth')(app);
-
+const cors = require('cors');
+app.use(cors());
 
 const { ObjectId } = require('mongodb');
-
 const mongoose = require('mongoose');
 const Models = require('./models.js');
 
-mongoose.connect('mongodb://localhost:27017/MyFlix', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/MyFlix', 
+{ useNewUrlParser: true, useUnifiedTopology: true });
+
+const { check, validationResult } = require('express-validator');
 
 const Movies = Models.Movie;
 const Users = Models.User;
 
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+let auth = require('./auth')(app);
+const passport = require('passport');
+require('./passport');
+
+app.get('/', (req, res) => {
+  res.send('Welcome to my movie app.');
 });
 
 
-/*let movies = [
-  {
-    Title: 'Silence of the Lambs',
-    Description: 'A young FBI cadet must receive the help of an incarcerated and manipulative cannibal killer to help catch another serial killer.',
-    Genre: {
-      Name: 'Thriller',
-      Description: 'Thriller film, also known as suspense film or suspense thriller, is a broad film genre that involves excitement and suspense in the audience.'
-    },
-    Director: {
-      Name: 'Jonathan Demme',
-      Bio: 'Robert Jonathan Demme was an American director, producer, and screenwriter.',
-      Birth: '1944',
-      Death: '2017'
-    },
-    ImagePath: 'silenceofthelambs.png',
-    Featured: true
-  },
-  {
-    Title: 'Inception',
-    Description: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
-    Genre: {
-      Name: 'Science Fiction',
-      Description: 'Science fiction is a genre of speculative fiction that typically deals with imaginative and futuristic concepts.'
-    },
-    Director: {
-      Name: 'Christopher Nolan',
-      Bio: 'Christopher Edward Nolan is a British-American film director, screenwriter, and producer.',
-      Birth: '1970'
-    },
-    ImagePath: 'inception.png',
-    Featured: true
-  },
-  {
-    Title: 'Pulp Fiction',
-    Description: 'The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.',
-    Genre: {
-      Name: 'Crime',
-      Description: 'Crime films, in the broadest sense, are a cinematic genre inspired by and analogous to the crime fiction literary genre.'
-    },
-    Director: {
-      Name: 'Quentin Tarantino',
-      Bio: 'Quentin Jerome Tarantino is an American filmmaker and screenwriter.',
-      Birth: '1963'
-    },
-    ImagePath: 'pulpfiction.png',
-    Featured: true
-  },
-  {
-    Title: 'The Shawshank Redemption',
-    Description: 'Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.',
-    Genre: {
-      Name: 'Drama',
-      Description: 'Drama is a genre of narrative fiction intended to be more serious than humorous in tone.'
-    },
-    Director: {
-      Name: 'Frank Darabont',
-      Bio: 'Frank Arpad Darabont is a Hungarian-American film director, screenwriter, and producer.',
-      Birth: '1959'
-    },
-    ImagePath: 'shawshankredemption.png',
-    Featured: true
-  },
-  {
-    Title: 'The Dark Knight',
-    Description: 'When the menace known as The Joker emerges from his mysterious past, he wreaks havoc and chaos on the people of Gotham.',
-    Genre: {
-      Name: 'Action',
-      Description: 'Action film is a film genre in which the protagonist or protagonists are thrust into a series of events that typically include violence.'
-    },
-    Director: {
-      Name: 'Christopher Nolan',
-      Bio: 'Christopher Edward Nolan is a British-American film director, screenwriter, and producer.',
-      Birth: '1970'
-    },
-    ImagePath: 'darkknight.png',
-    Featured: true
-  },
-  {
-    Title: 'Forrest Gump',
-    Description: 'The presidencies of Kennedy and Johnson, the Vietnam War, the Watergate scandal, and other historical events unfold from the perspective of an Alabama man with an IQ of 75.',
-    Genre: {
-      Name: 'Drama',
-      Description: 'Drama is a genre of narrative fiction intended to be more serious than humorous in tone.'
-    },
-    Director: {
-      Name: 'Robert Zemeckis',
-      Bio: 'Robert Lee Zemeckis is an American director, producer, and screenwriter.',
-      Birth: '1951'
-    },
-    ImagePath: 'forrestgump.png',
-    Featured: true
-  },
-  {
-    Title: 'Avatar',
-    Description: 'A paraplegic Marine dispatched to the moon Pandora on a unique mission becomes torn between following his orders and protecting the world he feels is his home.',
-    Genre: {
-      Name: 'Science Fiction',
-      Description: 'Science fiction is a genre of speculative fiction that typically deals with imaginative and futuristic concepts.'
-    },
-    Director: {
-      Name: 'James Cameron',
-      Bio: 'James Francis Cameron is a Canadian film director, producer, and screenwriter.',
-      Birth: '1954'
-    },
-    ImagePath: 'avatar.png',
-    Featured: true
-  },
-  {
-    Title: 'The Godfather',
-    Description: 'The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.',
-    Genre: {
-      Name: 'Crime',
-      Description: 'Crime films, in the broadest sense, are a cinematic genre inspired by and analogous to the crime fiction literary genre.'
-    },
-    Director: {
-      Name: 'Francis Ford Coppola',
-      Bio: 'Francis Ford Coppola is an American film director, producer, and screenwriter.',
-      Birth: '1939'
-    },
-    ImagePath: 'godfather.png',
-    Featured: true
-  },
-  {
-    Title: 'Jurassic Park',
-    Description: "A pragmatic paleontologist visiting an almost complete theme park is tasked with protecting a couple of kids after a power failure causes the park's cloned dinosaurs to run loose.",
-    Genre: {
-      Name: 'Adventure',
-      Description: 'Adventure films are a genre of film that typically use their action scenes to display and explore exotic locations in an energetic way.'
-    },
-    Director: {
-      Name: 'Steven Spielberg',
-      Bio: 'Steven Allan Spielberg is an American film director, producer, and screenwriter.',
-      Birth: '1946'
-    },
-    ImagePath: 'jurassicpark.png',
-    Featured: true
-  },
-  {
-    Title: 'The Matrix',
-    Description: 'A computer programmer discovers a hidden reality in which humanity is enslaved by machines and joins a rebellion to break free.',
-    Genre: {
-      Name: 'Science Fiction',
-      Description: 'Science fiction is a genre of speculative fiction that typically deals with imaginative and futuristic concepts.'
-    },
-    Director: {
-      Name: 'The Wachowskis',
-      Bio: 'Lana Wachowski and Lilly Wachowski are visionary directors known for their work in The Matrix trilogy.',
-      Birth: 'Lana Wachowski: 1965, Lilly Wachowski: 1967'
-    },
-    ImagePath: 'matrix.png',
-    Featured: true
-  },
-  {
-    Title: 'The Lion King',
-    Description: 'Lion prince Simba and his father are targeted by his bitter uncle, who wants to ascend the throne himself.',
-    Genre: {
-      Name: 'Animation',
-      Description: 'Animation is a method in which figures are manipulated to appear as moving images.'
-    },
-    Director: {
-      Name: 'Roger Allers',
-      Bio: 'Roger Allers is an American film director, screenwriter, and storyboard artist.',
-      Birth: '1949'
-    },
-    ImagePath: 'lionking.png',
-    Featured: true
-  },
-  {
-    Title: "Harry Potter and the Sorcerer's Stone",
-    Description: 'An orphaned boy enrolls in a school of wizardry, where he learns the truth about himself, his family, and the terrible evil that haunts the magical world.',
-    Genre: {
-      Name: 'Fantasy',
-      Description: 'Fantasy is a genre of speculative fiction set in a fictional universe, often inspired by real-world myth and folklore.'
-    },
-    Director: {
-     : 'Chris Columbus',
-      Bio: 'Chris Columbus is an American filmmaker and screenwriter.',
-      Birth: '1958'
-    },
-    ImagePath: 'harrypotter.png',
-    Featured: true
+// READ - returns all movies
+app.get(
+  '/movies',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    Movies.find()
+      .then((movies) => res.status(200).json(movies))
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
   }
-]; 
+);
 
-let users = [
- [
-  {
-    ID: 1,
-    Username: "user1",
-    Password: "password1",
-    Email: "user1@example.com",
-    Birthday: "1990-01-01",
-    FavoriteMovies: []
-  },
-  {
-    ID: 2,
-    Username: "user2",
-    Password: "password2",
-    Email: "user2@example.com",
-    Birthday: "1995-02-15",
-    FavoriteMovies: []
-  },
-  {
-    ID: 3,
-    Username: "user3",
-    Password: "password3",
-    Email: "user3@example.com",
-    Birthday: "1988-06-10",
-    FavoriteMovies: []
-  },
-  {
-    ID: 4,
-    Username: "user4",
-    Password: "password4",
-    Email: "user4@example.com",
-    Birthday: "1992-11-20",
-    FavoriteMovies: []
-  },
-  {
-    ID: 5,
-    Username: "user5",
-    Password: "password5",
-    Email: "user5@example.com",
-    Birthday: "1985-09-30",
-    FavoriteMovies: []
+// READ - returns one movie given the title
+app.get(
+  '/movies/:Title',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { Title } = req.params;
+
+    Movies.findOne({ Title })
+      .then((movie) => {
+        if (movie) {
+          res.status(200).json(movie);
+        } else {
+          res.status(400).json('Movie not found.');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
   }
+);
 
- ]
-];
-*/ 
+// READ - returns information on a director
+app.get(
+  '/movies/Director/:Name',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { Name } = req.params;
 
+    Movies.findOne({ 'Director.Name': Name })
+      .then((movie) => {
+        if (movie) {
+          res.status(200).json(movie.Director);
+        } else {
+          res.status(400).json('Director not found.');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// READ - returns information about a genre
+app.get(
+  '/movies/Genre/:Name',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { Name } = req.params;
+
+    Movies.findOne({ 'Genre.Name': Name })
+      .then((movie) => {
+        if (movie) {
+          res.status(200).json(movie.Genre);
+        } else {
+          res.status(400).json('Genre not found.');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// CREATE - add a new user to the list of users
+/* We'll expect JSON in this format
+{
+  Username: String,
+  Password: String,
+  Email: String,
+  Birthday: Date
+}*/
+app.post('/users',
+  [
+    check('Username', 'Username is required').isLength({ min: 5 }),
+    check(
+      'Username',
+      'Username contains non alphanumeric characters - not allowed.'
+    ).isAlphanumeric(),
+    check('Password', 'Password is required').not().isEmpty(),
+    check('Email', 'Email does not appear to be valid').isEmail(),
+  ],
+  (req, res) => {
+    // check the validation object for errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const hashedPassword = Users.hashPassword(req.body.Password);
+    Users.findOne({ Username: req.body.Username })
+      .then((user) => {
+        if (user) {
+          return res.status(400).send(req.body.Username + ' already exists');
+        }
+
+        Users.create({
+          Username: req.body.Username,
+          Password: hashedPassword,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday,
+        })
+          .then((user) => res.status(201).json(user))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).send('Error: ' + error);
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// GET - Get all users
+app.get(
+  '/users',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    Users.find()
+      .then((users) => res.status(201).json(users))
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// GET - Get a user by Username
+app.get(
+  '/users/:Username',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    Users.findOne({ Username: req.params.Username })
+      .then((user) => res.status(200).json(user))
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// UPDATE - Update a user's info, by Username
+/* We'll expect JSON in this format
+{
+  Username: String, (required)
+  Password: String, (required)
+  Email: String, (required)
+  Birthday: Date
+}*/
+app.put(
+  '/users/:Username',
+  [
+    check('Username', 'Username is required').isLength({ min: 5 }),
+    check(
+      'Username',
+      'Username contains non alphanumeric characters - not allowed.'
+    ).isAlphanumeric(),
+    check('Password', 'Password is required').not().isEmpty(),
+    check('Email', 'Email does not appear to be valid').isEmail(),
+  ],
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    // check the validation object for errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const hashedPassword = Users.hashPassword(req.body.Password);
+    Users.findOneAndUpdate(
+      { Username: req.params.Username },
+      {
+        $set: {
+          Username: req.body.Username,
+          Password: hashedPassword,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday,
+        },
+      },
+      { new: true }
+    )
+      .then((updatedUser) => res.status(200).json(updatedUser))
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// CREATE - Add a new movie to user's favorites
+app.post(
+  '/users/:Username/movies/:MovieID',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { Username, MovieID } = req.params;
+
+    Users.findOneAndUpdate(
+      { Username },
+      { $addToSet: { FavoriteMovies: MovieID } },
+      { new: true }
+    )
+      .then((updatedUser) => res.status(201).json(updatedUser))
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// DELETE - Remove a movie from user's favorites
+app.delete(
+  '/users/:Username/movies/:MovieID',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { Username, MovieID } = req.params;
+
+    Users.findOneAndUpdate(
+      { Username },
+      { $pull: { FavoriteMovies: MovieID } },
+      { new: true }
+    )
+      .then((updatedUser) => res.status(200).json(updatedUser))
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// DELETE - Remove a user
+app.delete(
+  '/users/:Username',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { Username } = req.params;
+
+    Users.findOneAndRemove({ Username })
+      .then((user) => {
+        if (!user) {
+          res.status(400).send(Username + ' was not found.');
+        } else {
+          res.status(200).send(Username + ' was deleted.');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
+// Handle any errors that occur
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('An error has occurred.');
+});
+
+const port = process.env.PORT || 8080;
+app.listen(port, '0.0.0.0', () => {
+  console.log('Listening on Port ' + port);
+});
+/*
 // CREATE requests
 app.post('/users', async (req, res) => {
   console.log(req.body);
@@ -470,3 +524,5 @@ app.delete('/users/:Username', async (req, res) => {
 app.listen(8080, () => {
   console.log('Your app is listening on port 8080.');
 });
+*/ 
+// End of code from index.js
