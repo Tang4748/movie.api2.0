@@ -26,7 +26,7 @@ const passport = require('passport');
 require('./passport');
 
 app.get('/', (req, res) => {
-  res.send('Welcome to my movie app.');
+  res.send('Welcome to my movie app. User Interface coming soon! Check out the documentation by adding "/documentation.html" to the end of the URL and take a look at the endpoints in Postman. Enjoy!');
 });
 
 
