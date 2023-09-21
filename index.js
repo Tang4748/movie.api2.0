@@ -29,6 +29,9 @@ app.get('/', (req, res) => {
   res.send('Welcome to my Movie Database. User Interface coming soon! Check out the documentation by adding "/documentation.html" to the end of the URL and take a look at the endpoints in Postman. Enjoy!');
 });
 
+app.get('/documentation', (req, res) => {
+  res.send('/documentation.html');
+});
 
 // READ - returns all movies
 app.get(
