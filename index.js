@@ -35,7 +35,7 @@ app.get('/documentation', (req, res) => {
 
 // READ - returns all movies
 app.get(
-  '/movies',
+  '/movies', 
   (req, res) => {
     Movies.find()
       .then((movies) => res.status(200).json(movies))
