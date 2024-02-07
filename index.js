@@ -13,7 +13,7 @@ const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
 const Models = require('./models.js');
 
-mongoose.connect( 'mongodb+srv://Admin:passwordtang@cluster0.sgafsca.mongodb.net/?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect( process.env.CONNECTION_URI , { useNewUrlParser: true, useUnifiedTopology: true });
 
 const { check, validationResult } = require('express-validator');
 //fAxxqlGnaAuXPTju admin password for atlas. 
