@@ -69,6 +69,56 @@ app.get(
   }
 );
 
+//Post a new movie
+app.post('/movies',
+  [
+    check('Title', 'Title is required').isLength({ min: 1 }),
+    check(
+      'Title',
+      'Title contains non alphanumeric characters - not allowed.'
+    ).isAlphanumeric(),
+    check('Description', 'Description is required').not().isEmpty(),
+    check('Genre', 'Genre does not appear to be filled in').not().isEmpty(),
+  ],
+  (req, res) => {
+    // check the validation object for errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    Movies.findOne({ Title: req.body.Title })
+      .then((movies) => {
+        if (movies) {
+          return res.status(400).send(req.body.Title + ' already exists');
+        }
+        Movies.create({
+          Title: req.body.Title,
+          Description: req.body.Description,
+          Genre: {
+            Name: req.body.Genre.Name,
+            Description: req.body.Genre.Description,
+          },
+          Director: {
+            Name: req.body.Director.Name,
+            Bio: req.body.Director.Bio,
+          },
+          Actors: req.body.Actors,
+          ImagePath: req.body.ImagePath,
+          Featured: req.body.Featured,
+        })
+          .then((movies) => res.status(201).json(movies))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).send('Error: ' + error);
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
+      });
+  }
+);
+
 // READ - returns information on a director
 app.get(
   '/movies/Director/:Name',
